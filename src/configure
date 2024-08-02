@@ -146,6 +146,7 @@ fi
 
 cat > $TEST_C <<EOF
 #include <linux/blkdev.h>
+#include <linux/blk-mq.h>
 #include "test.h"
 
 int test (void)
@@ -178,6 +179,7 @@ fi
 
 cat > $TEST_C <<EOF
 #include <linux/fs.h>
+#include <linux/pagemap.h>
 #include "test.h"
 
 int test (void)
@@ -241,21 +243,6 @@ if compile_prog "Checking if vm_fault_t exist in mm_types.h... "; then
 fi
 
 cat > $TEST_C <<EOF
-#include <linux/fs.h>
-#include "test.h"
-
-int test (void)
-{
-        int x = IOCB_HIPRI;
-
-        return x;
-}
-EOF
-if compile_prog "Checking if IOCB_HIPRI flag exists in fs.h... "; then
-        output_sym "HAVE_IOCB_HIPRI"
-fi
-
-cat > $TEST_C <<EOF
 #include <linux/pci.h>
 #include "test.h"
 
@@ -268,6 +255,21 @@ int test (void)
 EOF
 if compile_prog "Checking if enum PCIE_SPEED_32_0GT exists in pci.h... "; then
         output_sym "HAVE_PCIE_SPEED_32_0GT"
+fi
+
+cat > $TEST_C <<EOF
+#include <linux/pci.h>
+#include "test.h"
+
+int test (void)
+{
+        int x = PCIE_SPEED_64_0GT;
+
+        return x;
+}
+EOF
+if compile_prog "Checking if enum PCIE_SPEED_64_0GT exists in pci.h... "; then
+        output_sym "HAVE_PCIE_SPEED_64_0GT"
 fi
 
 cat > $TEST_C <<EOF
@@ -377,6 +379,139 @@ int test (void)
 EOF
 if compile_prog "Checking if mremap in vm_operations_struct has two parameters..."; then
         output_sym "HAVE_VM_OPS_MREMAP_TWO_PARAM"
+fi
+
+cat > $TEST_C <<EOF
+#include <linux/module.h>
+#include "test.h"
+
+int test (void)
+{
+        mutex_lock(&module_mutex);
+        mutex_unlock(&module_mutex);
+        return 0;
+}
+EOF
+if compile_prog "Checking if symbol module_mutex is present..."; then
+        output_sym "HAVE_MODULE_MUTEX"
+fi
+
+cat > $TEST_C <<EOF
+#include <linux/blk-integrity.h>
+#include "test.h"
+
+int test (void)
+{
+	blk_integrity_rq(NULL);
+	return 0;
+}
+
+EOF
+if compile_prog "Checking if blk-integrity.h is present..."; then
+	output_sym "HAVE_BLK_INTEGRITY_H"
+fi
+
+cat > $TEST_C <<EOF
+#include <linux/fs.h>
+#include "test.h"
+
+static void check_io_complete(struct kiocb *kiocb, long res, long res2) {
+        return; 
+}
+
+int test (void)
+{
+        struct kiocb common;
+        common.ki_complete = check_io_complete;
+	return 0;
+}
+EOF
+if compile_prog "Checking if KI_COMPLETE has 3 parameters ..."; then
+        output_sym "KI_COMPLETE_HAS_3_PARAMETERS"
+fi
+
+cat > $TEST_C <<EOF
+#include <linux/mm_types.h>
+#include <linux/mm.h>
+#include "test.h"
+
+int test (void)
+{
+	struct temp {
+		int a;
+	};
+	struct temp t;
+	struct page *p;
+	pin_user_pages_fast((unsigned long)&t, 1, 1, &p);
+	return 0;
+}
+EOF
+if compile_prog "Checking if pin_user_pages_fast symbol is present in kernel or not ..."; then
+        output_sym "HAVE_PIN_USER_PAGES_FAST"
+fi
+
+cat > $TEST_C <<EOF
+#include <linux/random.h>
+#include "test.h"
+
+int test (void)
+{
+	unsigned int temp = prandom_u32();
+	return 0;
+}
+EOF
+if compile_prog "Checking if prandom_u32 symbol is present in kernel or not ..."; then
+        output_sym "HAVE_PRANDOM_U32"
+fi
+
+cat > $TEST_C <<EOF
+
+#include "test.h"
+#include <linux/device.h>
+static char *temp_devnode(struct device *dev, umode_t *mode)
+{
+	return NULL;
+}
+int test (void)
+{
+	struct class *temp;
+	temp->devnode = temp_devnode;
+	return 0;
+}
+EOF
+if compile_prog "Checking if devnode in class has doesn't have const device or not ..."; then
+        output_sym "HAVE_NO_CONST_DEVICE_IN_DEVNODE"
+fi
+
+cat > $TEST_C <<EOF
+
+#include "test.h"
+#include <linux/device.h>
+#include <linux/export.h>
+int test (void)
+{
+    struct class* nvfs_class;
+    nvfs_class = class_create(THIS_MODULE, "testclass");
+    return 0;
+}
+EOF
+if compile_prog "Checking if class_create has two parameters or not ..."; then
+        output_sym "CLASS_CREATE_HAS_TWO_PARAMS"
+fi
+
+cat > $TEST_C <<EOF
+
+#include "test.h"
+#include <linux/mm_types.h>
+int test (void)
+{
+    struct vm_area_struct vma;
+    vma.vm_flags = 0;
+    return 0;
+}
+EOF
+if compile_prog "Checking if vma_flags are modifiable directly ..."; then
+        output_sym "NVFS_VM_FLAGS_NOT_CONSTANT"
 fi
 
 echo "#endif" >> $config_host_h

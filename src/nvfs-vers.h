@@ -24,12 +24,12 @@
 
 /* please update the driver version here and also the debian change log*/
 
-#define NVFS_DRIVER_MAJOR_VERSION   2U //2-bytes
+#define NVFS_DRIVER_MAJOR_VERSION   2 //2-bytes
 
-#define NVFS_DRIVER_MINOR_VERSION   7U //2-bytes
+#define NVFS_DRIVER_MINOR_VERSION   20 //2-bytes
 
 // template for build version
-#define NVFS_DRIVER_PATCH_VERSION  49U
+#define NVFS_DRIVER_PATCH_VERSION  5
 
 static inline unsigned int nvfs_driver_version(void) {
     return (NVFS_DRIVER_MAJOR_VERSION << 16) | NVFS_DRIVER_MINOR_VERSION;

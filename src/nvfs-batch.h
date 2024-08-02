@@ -8,7 +8,7 @@
  * and/or sell copies of the Software, and to permit persons to whom the
  * Software is furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in 
+ * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -19,11 +19,21 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#ifndef NVFS_PEER_H
-#define NVFS_PEER_H
+#ifndef NVFS_BATCH_H
+#define NVFS_BATCH_H
 
-#define NVFS_PEER_DRV_NAME	"nvidia-fs"
-#define NVFS_PEER_DRV_VERSION	"1.0"
-int nvfs_peer_client_init(void);
-void nvfs_peer_client_exit(void);
+#include "nvfs-core.h"
+#include "nvfs-mmap.h"
+
+#define NVFS_MAX_BATCH_ENTRIES 256 
+
+typedef struct {
+   uint64_t ctx_id;
+   ktime_t start_io;		// Start time of IO for latency calculation
+   uint64_t nents;
+   nvfs_io_t *nvfsio[NVFS_MAX_BATCH_ENTRIES]; 
+} nvfs_batch_io_t;
+
+nvfs_batch_io_t* nvfs_io_batch_init(nvfs_ioctl_param_union *input_param);
+long nvfs_io_batch_submit(nvfs_batch_io_t *nvfs_batch);
 #endif
